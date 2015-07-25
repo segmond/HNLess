@@ -1,10 +1,11 @@
-import requests, json
+import requests, json, pickle, datetime
 
 # https://github.com/HackerNews/API
 class HNLess:
     def __init__(self):
         self.top_stories_ids = []
         self.stories = {}
+        self.top10data = {}
 
     def getTopStories(self):
         hn_url = "https://hacker-news.firebaseio.com/v0/topstories.json?print=pretty"
@@ -26,9 +27,31 @@ class HNLess:
             story = self.getItem(id)
             score = self.getScore(story)
             self.stories[id] = score
-            print "story's ", id, " score is ", score
-        print self.stories
+        return self.stories
+    
+    def topTen(self):
+        today = datetime.date.today().strftime("%m-%d-%Y")
+        return sorted([(value,key) for (key,value) in self.stories.items()], reverse=True)[0:10]
 
+    def save(self, top10):
+        input = open('top10hn.pkl', 'rb')
+        self.top10data = pickle.load(input)
+        input.close()
+
+        self.top10data[today] = top10
+
+        output = open('top10hn.pkl', 'wb')
+        pickle.dump(self.top10data, output)
+        output.close()
+
+    def run(self):
+        self.allScores()
+        top10data = self.topTen()
+        self.save(top10data)
+
+    def show(self):
+        print self.top10data
 
 app = HNLess()
-app.allScores()
+app.run()
+app.show()
